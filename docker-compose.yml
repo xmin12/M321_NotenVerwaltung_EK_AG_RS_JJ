@@ -1,0 +1,89 @@
+services:
+  # -------------------- DATENBANK --------------------
+  db:
+    image: postgres:14-alpine
+    container_name: notenverwaltung_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=userdb,classdb,gradedb
+    # KORRIGIERTER ABSCHNITT: Beide Volumes sind jetzt eine einzige Liste
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./setup-multiple-dbs.sh:/docker-entrypoint-initdb.d/setup-multiple-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # -------------------- BACKEND SERVICES --------------------
+  user-service:
+    build: ./backend/user-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      db:
+        condition: service_healthy
+
+  class-service:
+    build: ./backend/class-service
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/classdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      db:
+        condition: service_healthy
+
+  grade-service:
+    build: ./backend/grade-service
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/gradedb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      db:
+        condition: service_healthy
+
+  overview-service:
+    build: ./backend/overview-service
+    ports:
+      - "8084:8080"
+
+  # -------------------- API GATEWAY / LOAD BALANCER --------------------
+  load-balancer:
+    image: nginx:stable-alpine
+    container_name: notenverwaltung_gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - user-service
+      - class-service
+      - grade-service
+      - overview-service
+
+  # -------------------- FRONTEND --------------------
+  frontend:
+    build: ./frontend/notenverwaltung-ui
+    container_name: notenverwaltung_ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - load-balancer
+
+# Definiert das Volume für die Datenbank, um Datenverlust zu verhindern
+volumes:
+  postgres_data:

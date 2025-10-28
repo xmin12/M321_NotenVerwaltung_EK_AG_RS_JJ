@@ -1,0 +1,75 @@
+version: "3.9"
+services:
+  # --- Datenbanken ---
+  user-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: users
+    ports: ["5433:5432"]
+    volumes: [user-data:/var/lib/postgresql/data]
+
+  class-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: classes
+    ports: ["5434:5432"]
+    volumes: [class-data:/var/lib/postgresql/data]
+
+  grade-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: grades
+    ports: ["5435:5432"]
+    volumes: [grade-data:/var/lib/postgresql/data]
+
+  stats-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stats
+    ports: ["5436:5432"]
+    volumes: [stats-data:/var/lib/postgresql/data]
+
+  # --- Backends ---
+  user-service:
+    build: ./user-service
+    ports: ["8081:8081"]
+    depends_on: [user-db]
+
+  class-service:
+    build: ./class-service
+    ports: ["8082:8082"]
+    depends_on: [class-db]
+
+  grade-service:
+    build: ./grade-service
+    ports: ["8083:8083"]
+    depends_on: [grade-db]
+
+  stats-service:
+    build: ./stats-service
+    ports: ["8084:8084"]
+    depends_on: [stats-db]
+
+  # --- Frontend ---
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    depends_on:
+      - user-service
+      - class-service
+      - grade-service
+      - stats-service
+
+volumes:
+  user-data:
+  class-data:
+  grade-data:
+  stats-data:

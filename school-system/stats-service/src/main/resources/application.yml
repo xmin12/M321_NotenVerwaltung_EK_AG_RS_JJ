@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://stats-db:5432/stats
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+server:
+  port: 8084

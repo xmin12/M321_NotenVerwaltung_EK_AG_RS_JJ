@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://grade-db:5432/grades
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+server:
+  port: 8083

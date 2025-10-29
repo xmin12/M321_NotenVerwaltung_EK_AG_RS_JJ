@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://class-db:5432/classes
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+server:
+  port: 8082

@@ -1,4 +1,4 @@
-package main.java.com.example.user;
+package com.example.user;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

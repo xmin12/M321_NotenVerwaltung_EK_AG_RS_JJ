@@ -1,3 +1,5 @@
+package com.example.grade;
+
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

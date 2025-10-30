@@ -1,4 +1,4 @@
-package main.java.com.example.user;
+package com.example.user;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;

@@ -7,8 +7,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: users
-    ports: ["5433:5432"]
+    ports: ["5433:5432"] 
     volumes: [user-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
 
   class-db:
     image: postgres:16
@@ -18,6 +22,10 @@ services:
       POSTGRES_DB: classes
     ports: ["5434:5432"]
     volumes: [class-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
 
   grade-db:
     image: postgres:16
@@ -27,6 +35,10 @@ services:
       POSTGRES_DB: grades
     ports: ["5435:5432"]
     volumes: [grade-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
 
   stats-db:
     image: postgres:16
@@ -36,27 +48,55 @@ services:
       POSTGRES_DB: stats
     ports: ["5436:5432"]
     volumes: [stats-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
 
   # --- Backends ---
   user-service:
     build: ./user-service
     ports: ["8081:8081"]
-    depends_on: [user-db]
+    depends_on:
+      user-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/users
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
   class-service:
     build: ./class-service
     ports: ["8082:8082"]
-    depends_on: [class-db]
+    depends_on:
+      class-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://class-db:5432/classes
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
   grade-service:
     build: ./grade-service
     ports: ["8083:8083"]
-    depends_on: [grade-db]
+    depends_on:
+      grade-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://grade-db:5432/grades
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
   stats-service:
     build: ./stats-service
     ports: ["8084:8084"]
-    depends_on: [stats-db]
+    depends_on:
+      stats-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
   # --- Frontend ---
   frontend:

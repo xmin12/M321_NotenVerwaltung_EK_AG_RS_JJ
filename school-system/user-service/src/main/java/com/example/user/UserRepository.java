@@ -1,4 +1,8 @@
 package com.example.user;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {}
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    List<User> findByRole(User.Role role);
+}

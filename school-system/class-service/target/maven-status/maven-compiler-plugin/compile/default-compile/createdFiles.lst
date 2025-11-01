@@ -1,0 +1,5 @@
+com\example\classes\ClassRepository.class
+com\example\classes\ClassController.class
+com\example\classes\ClassEntity.class
+com\example\classes\ClassApplication.class
+com\example\classes\ClassService.class

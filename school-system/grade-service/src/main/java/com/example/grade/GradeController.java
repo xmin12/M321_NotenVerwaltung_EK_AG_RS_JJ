@@ -15,7 +15,10 @@ public class GradeController {
   }
 
   @GetMapping
-  public List<Grade> getAll() {
+  public List<Grade> getAll(@RequestParam(required = false) String subject) {
+    if (subject != null && !subject.isEmpty()) {
+      return repo.findBySubject(subject);
+    }
     return repo.findAll();
   }
 
@@ -42,8 +45,16 @@ public class GradeController {
 
   @PutMapping("/{id}")
   public Grade updateGrade(@PathVariable Long id, @RequestBody Grade g) {
-    g.setId(id);
-    return repo.save(g);
+    return repo.findById(id)
+            .map(existing -> {
+              existing.setStudentId(g.getStudentId());
+              existing.setClassId(g.getClassId());
+              existing.setSubject(g.getSubject());
+              existing.setValue(g.getValue());
+              existing.setDate(g.getDate());
+              return repo.save(existing);
+            })
+            .orElseThrow(() -> new RuntimeException("Grade not found with id " + id));
   }
 
   @DeleteMapping("/{id}")

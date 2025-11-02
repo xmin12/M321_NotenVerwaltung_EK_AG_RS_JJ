@@ -1,16 +1,11 @@
 package com.example.classes;
 
+import com.example.classes.dto.ClassDetailDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-import com.example.classes.ClassEntity;
-import com.example.classes.ClassService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-
-/**
- * REST controller for managing classes.
- */
 @RestController
 @RequestMapping("/api/classes")
 public class ClassController {
@@ -19,8 +14,8 @@ public class ClassController {
     private ClassService classService;
 
     /**
-     * Get all classes.
-     * @return list of ClassEntity
+     * Get a simple list of all classes.
+     * @return A list of ClassEntity objects with only IDs.
      */
     @GetMapping
     public List<ClassEntity> getAllClasses() {
@@ -28,38 +23,35 @@ public class ClassController {
     }
 
     /**
-     * Get a class by its ID.
-     * @param classId the class ID
-     * @return ResponseEntity with ClassEntity or 404
+     * Get the full, detailed information for a single class,
+     * including teacher and student objects.
+     * @param id The ID of the class.
+     * @return The rich ClassDetailDTO.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ClassEntity> getClassById(@PathVariable(value = "id") Long classId) {
-        return classService.getClassById(classId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ClassDetailDTO> getClassDetailsById(@PathVariable Long id) {
+        try {
+            ClassDetailDTO classDetails = classService.getClassDetailsById(id);
+            return ResponseEntity.ok(classDetails);
+        } catch (RuntimeException e) {
+            // This will catch the "Class not found" exception from the service
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    /**
-     * Create a new class.
-     * @param classEntity the class entity
-     * @return created ClassEntity
-     */
+    // --- The rest of your POST, PUT, DELETE methods can remain as they were ---
+    // They still work with the simple ClassEntity, which is fine for now.
+
     @PostMapping
     public ClassEntity createClass(@RequestBody ClassEntity classEntity) {
         return classService.createClass(classEntity);
     }
 
-    /**
-     * Update an existing class.
-     * @param classId the class ID
-     * @param classDetails the updated class details
-     * @return ResponseEntity with updated ClassEntity or 404
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<ClassEntity> updateClass(@PathVariable(value = "id") Long classId,
+    public ResponseEntity<ClassEntity> updateClass(@PathVariable(value = "id") Long id,
                                                    @RequestBody ClassEntity classDetails) {
         try {
-            return ResponseEntity.ok(classService.updateClass(classId, classDetails));
+            return ResponseEntity.ok(classService.updateClass(id, classDetails));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

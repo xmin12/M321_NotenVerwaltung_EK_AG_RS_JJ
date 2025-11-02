@@ -11,8 +11,17 @@ public class UserController {
 
     public UserController(UserRepository repo) { this.repo = repo; }
 
-    @GetMapping
-    public List<User> getAll() { return repo.findAll(); }
+    // In com.example.user.UserController
+
+@GetMapping
+public List<User> getAll(@RequestParam(name = "ids", required = false) List<Long> ids) {
+    if (ids != null && !ids.isEmpty()) {
+        // If the "ids" parameter is present, find all users with those IDs.
+        return repo.findAllById(ids);
+    }
+    // Otherwise, return all users as before.
+    return repo.findAll();
+}
 
     @GetMapping("/{id}")
     public User getOne(@PathVariable Long id) {

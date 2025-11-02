@@ -1,52 +1,94 @@
 package com.example.classes;
 
+import com.example.classes.dto.ClassDetailDTO;
+import com.example.classes.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-/**
- * Service class for managing classes.
- */
 @Service
 public class ClassService {
 
     @Autowired
     private ClassRepository classRepository;
 
-    /**
-     * Get all classes.
-     * @return list of ClassEntity
-     */
+    // Inject the WebClient bean we configured earlier.
+    @Autowired
+    private WebClient userServiceWebClient;
+
+    // This new method will be our primary way of getting detailed class info.
+    public ClassDetailDTO getClassDetailsById(Long id) {
+        // 1. Get the basic class info from our own database.
+        ClassEntity classEntity = classRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Class not found with id: " + id));
+
+        // 2. Make an API call to the user-service to get the teacher's details.
+        // The .block() method waits for the network call to complete.
+        UserDTO teacher = fetchUserById(classEntity.getTeacherId()).block();
+
+        // 3. Make another API call to get details for all students in the class.
+        List<UserDTO> students = Collections.emptyList(); // Default to empty list
+        if (classEntity.getStudentIds() != null && !classEntity.getStudentIds().isEmpty()) {
+            students = fetchUsersByIds(classEntity.getStudentIds());
+        }
+
+        // 4. Assemble the final, rich DTO and return it.
+        return new ClassDetailDTO(
+                classEntity.getId(),
+                classEntity.getName(),
+                teacher,
+                students
+        );
+    }
+
+    // Helper method to fetch a single user by their ID from the user-service.
+    private Mono<UserDTO> fetchUserById(Long userId) {
+        return userServiceWebClient.get()
+                .uri("/api/users/{id}", userId) // Calls GET http://user-service:8081/api/users/{id}
+                .retrieve()
+                .bodyToMono(UserDTO.class)
+                // Add error handling for when a user is not found in the other service
+                .onErrorResume(error -> Mono.just(new UserDTO(userId, "Unknown User", "", "")));
+    }
+
+    // Helper method to fetch a list of users by their IDs.
+    private List<UserDTO> fetchUsersByIds(List<Long> userIds) {
+        // Convert the list of Longs into a comma-separated string (e.g., "101,102,103")
+        String ids = userIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        return userServiceWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/users")
+                        .queryParam("ids", ids) // Calls GET http://user-service:8081/api/users?ids=101,102
+                        .build())
+                .retrieve()
+                .bodyToFlux(UserDTO.class) // We expect a list (Flux) of users
+                .collectList()
+                .block(); // .block() waits for the list to be complete
+    }
+
+    // --- EXISTING METHODS (No changes needed below this line) ---
+
     public List<ClassEntity> getAllClasses() {
         return classRepository.findAll();
     }
 
-    /**
-     * Get a class by its ID.
-     * @param id the class ID
-     * @return Optional of ClassEntity
-     */
     public Optional<ClassEntity> getClassById(Long id) {
         return classRepository.findById(id);
     }
 
-    /**
-     * Create a new class.
-     * @param classEntity the class entity
-     * @return created ClassEntity
-     */
     public ClassEntity createClass(ClassEntity classEntity) {
         return classRepository.save(classEntity);
     }
 
-    /**
-     * Update an existing class.
-     * @param id the class ID
-     * @param classDetails the updated class details
-     * @return updated ClassEntity
-     */
     public ClassEntity updateClass(Long id, ClassEntity classDetails) {
         ClassEntity classEntity = classRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Class not found with id: " + id));
@@ -57,20 +99,10 @@ public class ClassService {
         return classRepository.save(classEntity);
     }
 
-    /**
-     * Delete a class by its ID.
-     * @param id the class ID
-     */
     public void deleteClass(Long id) {
         classRepository.deleteById(id);
     }
 
-    /**
-     * Add a student to a class.
-     * @param classId the class ID
-     * @param studentId the student ID
-     * @return updated ClassEntity
-     */
     public ClassEntity addStudentToClass(Long classId, Long studentId) {
         ClassEntity classEntity = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found with id: " + classId));
@@ -80,12 +112,6 @@ public class ClassService {
         return classRepository.save(classEntity);
     }
 
-    /**
-     * Remove a student from a class.
-     * @param classId the class ID
-     * @param studentId the student ID
-     * @return updated ClassEntity
-     */
     public ClassEntity removeStudentFromClass(Long classId, Long studentId) {
         ClassEntity classEntity = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found with id: " + classId));
@@ -93,12 +119,6 @@ public class ClassService {
         return classRepository.save(classEntity);
     }
 
-    /**
-     * Change the teacher of a class.
-     * @param classId the class ID
-     * @param teacherId the new teacher ID
-     * @return updated ClassEntity
-     */
     public ClassEntity changeTeacher(Long classId, Long teacherId) {
         ClassEntity classEntity = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found with id: " + classId));

@@ -27,6 +27,16 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- ========================================================== -->
+        <!-- ==== ADDED DEPENDENCY FOR WECLIENT ==== -->
+        <!-- ========================================================== -->
+        <!-- For using WebClient to make reactive HTTP calls to other services -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <!-- ========================================================== -->
+
         <!-- For using Spring Data JPA with Hibernate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

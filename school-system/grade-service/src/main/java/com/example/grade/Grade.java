@@ -13,21 +13,22 @@ public class Grade {
     private Long id;
 
     @Column(nullable = false)
-    private Long studentId;  
+    private Long studentId;
+
     @Column(nullable = false)
     private Long classId;
 
     @Column(nullable = false)
     private String subject;
 
-    @Column(nullable = false)
+    // --- THIS IS THE FIX ---
+    @Column(name = "\"value\"", nullable = false)
     private Double value;
 
     @Column(nullable = false)
     private LocalDate date;
 
     public Grade() {}
-
 
     public Grade(Long studentId, Long classId, String subject, Double value, LocalDate date) {
         this.studentId = studentId;
@@ -37,26 +38,20 @@ public class Grade {
         this.date = date;
     }
 
-
+    // Getters and Setters remain the same...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
     public Long getStudentId() { return studentId; }
     public void setStudentId(Long studentId) { this.studentId = studentId; }
-
     public Long getClassId() { return classId; }
     public void setClassId(Long classId) { this.classId = classId; }
-
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
-
     public Double getValue() { return value; }
     public void setValue(Double value) { this.value = value; }
-
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
 
-    // Optional: for debugging/logging
     @Override
     public String toString() {
         return "Grade{" +
@@ -68,7 +63,6 @@ public class Grade {
                 ", date=" + date +
                 '}';
     }
-
 
     @Override
     public boolean equals(Object o) {

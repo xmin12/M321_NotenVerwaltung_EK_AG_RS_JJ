@@ -1,8 +1,25 @@
 -- =========================================
 -- CLASS 1A: Students 1–8
 -- =========================================
-INSERT INTO grades (student_id, class_id, subject, value, date) VALUES
+INSERT INTO grades (student_id, class_id, subject, "value", date) VALUES-- Student 1
+(1, 1, 'Math', 5.4, '2025-09-01'),
+(1, 1, 'English', 5.6, '2025-09-05'),
+(1, 1, 'Science', 5.2, '2025-09-10'),
 
+-- Student 2
+(2, 1, 'Math', 4.8, '2025-09-01'),
+(2, 1, 'English', 4.5, '2025-09-05'),
+(2, 1, 'Science', 4.6, '2025-09-10'),
+
+-- Student 3
+(3, 1, 'Math', 5.9, '2025-09-01'),
+(3, 1, 'English', 6.0, '2025-09-05'),
+(3, 1, 'Science', 5.8, '2025-09-10'),
+
+-- Student 4
+(4, 1, 'Math', 4.2, '2025-09-01'),
+(4, 1, 'English', 4.4, '2025-09-05'),
+(4, 1, 'Science', 4.3, '2025-09-10'),
 
 -- Student 5
 (5, 1, 'Math', 5.1, '2025-09-01'),
@@ -28,8 +45,7 @@ INSERT INTO grades (student_id, class_id, subject, value, date) VALUES
 -- =========================================
 -- CLASS 2B: Students 9–16
 -- =========================================
-INSERT INTO grades (student_id, class_id, subject, value, date) VALUES
--- Student 9
+INSERT INTO grades (student_id, class_id, subject, "value", date) VALUES-- Student 9
 (9, 2, 'Math', 5.3, '2025-09-01'),
 (9, 2, 'English', 5.5, '2025-09-05'),
 (9, 2, 'Science', 5.2, '2025-09-10'),

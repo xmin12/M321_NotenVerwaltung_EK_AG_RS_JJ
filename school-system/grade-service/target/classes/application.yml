@@ -1,0 +1,20 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:postgresql://grade-db:5432/grades
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql

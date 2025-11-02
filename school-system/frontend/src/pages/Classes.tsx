@@ -6,28 +6,28 @@ export default function Classes() {
   const [classes, setClasses] = useState<ClassEntity[]>([]);
   const [selectedClass, setSelectedClass] = useState<ClassEntity | null>(null);
   const [form, setForm] = useState({ name: "", teacherId: 0 });
-  const [studentId, setStudentId] = useState(0);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<{ teacher?: User; students?: User[] } | null>(null);
   const [userMap, setUserMap] = useState<Map<number, User>>(new Map());
+  const [allStudents, setAllStudents] = useState<User[]>([]); 
 
-  // Lade alle Klassen + Users einmal
   const fetchClasses = async () => {
     setLoading(true);
     try {
       const data = await classService.getAll();
-
-      // Lade alle Teacher und Students, um Map für schnelle Namensauflösung zu erstellen
       const allUserIds = new Set<number>();
       data.forEach(c => {
         allUserIds.add(c.teacherId);
         c.studentIds.forEach(id => allUserIds.add(id));
       });
-
       const usersArray = await Promise.all(Array.from(allUserIds).map(id => userService.getById(id)));
       const userMap = new Map<number, User>();
       usersArray.forEach(u => userMap.set(u.id, u));
       setUserMap(userMap);
+
+      const students = await userService.getByRole("STUDENT");
+      setAllStudents(students);
 
       setClasses(data);
     } catch (err) {
@@ -41,86 +41,30 @@ export default function Classes() {
     fetchClasses();
   }, []);
 
-  const handleViewUsers = async (c: ClassEntity) => {
-    try {
-      const teacher = userMap.get(c.teacherId);
-      const students = c.studentIds.map(id => userMap.get(id)).filter(Boolean) as User[];
-      setSelectedUsers({ teacher, students });
-      setSelectedClass(c);
-    } catch (err) {
-      console.error("Error fetching users:", err);
+  const handleViewUsers = (c: ClassEntity) => {
+    const teacher = userMap.get(c.teacherId);
+    const students = c.studentIds.map(id => userMap.get(id)).filter(Boolean) as User[];
+    setSelectedUsers({ teacher, students });
+    setSelectedClass(c);
+    setSelectedStudentIds([]); 
+  };
+
+  const handleAddStudents = async () => {
+    if (!selectedClass || selectedStudentIds.length === 0) return;
+
+    let updatedClass = selectedClass;
+    for (const sid of selectedStudentIds) {
+      updatedClass = await classService.addStudent(selectedClass.id, sid);
     }
-  };
-
-  const handleAddClass = async () => {
-    if (!form.name || !form.teacherId) return;
-    const newClass = await classService.create({ name: form.name, teacherId: form.teacherId });
-    setClasses([...classes, newClass]);
-    setForm({ name: "", teacherId: 0 });
-  };
-
-  const handleUpdateClass = async () => {
-    if (!selectedClass) return;
-    const updated = await classService.update(selectedClass.id, selectedClass);
-    setClasses(classes.map(c => (c.id === updated.id ? updated : c)));
-    setSelectedClass(null);
-  };
-
-  const handleDeleteClass = async (id: number) => {
-    await classService.delete(id);
-    setClasses(classes.filter(c => c.id !== id));
-    setSelectedClass(null);
-  };
-
-  const handleAddStudent = async () => {
-    if (!selectedClass || !studentId) return;
-    const updated = await classService.addStudent(selectedClass.id, studentId);
-    setClasses(classes.map(c => (c.id === updated.id ? updated : c)));
-    setSelectedClass(updated);
-    setStudentId(0);
-  };
-
-  const handleRemoveStudent = async (sid: number) => {
-    if (!selectedClass) return;
-    const updated = await classService.removeStudent(selectedClass.id, sid);
-    setClasses(classes.map(c => (c.id === updated.id ? updated : c)));
-    setSelectedClass(updated);
+    setClasses(classes.map(c => (c.id === updatedClass.id ? updatedClass : c)));
+    setSelectedClass(updatedClass);
+    setSelectedStudentIds([]);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-        Class Management
-      </h1>
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Class Management</h1>
 
-      {/* Add Class Form */}
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-md mb-8 border border-gray-200">
-        <h2 className="text-lg font-semibold mb-4">Add New Class</h2>
-        <div className="grid md:grid-cols-3 gap-3">
-          <input
-            type="text"
-            placeholder="Class Name"
-            className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Teacher ID"
-            className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={form.teacherId || ""}
-            onChange={e => setForm({ ...form, teacherId: Number(e.target.value) })}
-          />
-          <button
-            onClick={handleAddClass}
-            className="bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Add Class
-          </button>
-        </div>
-      </div>
-
-      {/* Class Cards */}
       {loading ? (
         <p className="text-center text-gray-500">Loading classes...</p>
       ) : (
@@ -138,39 +82,42 @@ export default function Classes() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => setSelectedClass(c)}
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClass(c.id)}
-                    className="text-red-600 hover:underline text-sm"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => handleViewUsers(c)}
-                    className="text-green-600 hover:underline text-sm"
-                  >
-                    View Users
-                  </button>
+                  <button onClick={() => handleViewUsers(c)} className="text-green-600 hover:underline text-sm">View Users</button>
                 </div>
               </div>
 
-              {/* Anzeige der Users */}
               {selectedUsers && selectedClass?.id === c.id && (
                 <div className="border-t pt-3 mt-3">
                   <h4 className="font-semibold mb-2">Teacher</h4>
                   <p>{selectedUsers.teacher?.name} (ID: {selectedUsers.teacher?.id})</p>
 
                   <h4 className="font-semibold mt-3 mb-2">Students</h4>
-                  <ul className="list-disc pl-5">
+                  <ul className="list-disc pl-5 mb-2">
                     {selectedUsers.students?.map(s => (
                       <li key={s.id}>{s.name} (ID: {s.id})</li>
                     ))}
                   </ul>
+
+                  <h4 className="font-semibold mt-3 mb-2">Add Students</h4>
+                  <select
+                    multiple
+                    value={selectedStudentIds.map(String)}
+                    onChange={e =>
+                      setSelectedStudentIds(Array.from(e.target.selectedOptions, option => Number(option.value)))
+                    }
+                    className="border p-2 rounded-lg w-full mb-2 focus:ring-2 focus:ring-blue-400"
+                  >
+                    {allStudents
+                      .filter(s => !selectedClass.studentIds.includes(s.id))
+                      .map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} (ID: {s.id})
+                        </option>
+                      ))}
+                  </select>
+                  <button onClick={handleAddStudents} className="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700 transition">
+                    Add Selected Students
+                  </button>
 
                   <button
                     onClick={() => setSelectedUsers(null)}

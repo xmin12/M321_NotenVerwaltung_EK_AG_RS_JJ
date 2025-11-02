@@ -5,7 +5,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/classes")
-@CrossOrigin(origins = "*")  // erlaubt Zugriff von allen Domains
+@CrossOrigin(origins = "*")
 public class ClassController {
 
     private final ClassService classService;

@@ -13,10 +13,9 @@ public class Grade {
     private Long id;
 
     @Column(nullable = false)
-    private Long studentId;  // from user-service
-
+    private Long studentId;  
     @Column(nullable = false)
-    private Long classId;    // from class-service
+    private Long classId;
 
     @Column(nullable = false)
     private String subject;

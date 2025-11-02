@@ -4,18 +4,28 @@ import com.example.classes.dto.ClassDetailDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/classes")
+@CrossOrigin(origins = "*")
 public class ClassController {
 
     @Autowired
     private ClassService classService;
 
+    @PostConstruct
+    public void printStartupMessage() {
+        System.out.println();
+        System.out.println("************************************************************");
+        System.out.println("****** THE NEW AND IMPROVED CONTROLLER IS NOW RUNNING! ******");
+        System.out.println("************************************************************");
+        System.out.println();
+    }
+
     /**
      * Get a simple list of all classes.
-     * @return A list of ClassEntity objects with only IDs.
      */
     @GetMapping
     public List<ClassEntity> getAllClasses() {
@@ -23,24 +33,22 @@ public class ClassController {
     }
 
     /**
-     * Get the full, detailed information for a single class,
-     * including teacher and student objects.
-     * @param id The ID of the class.
-     * @return The rich ClassDetailDTO.
+     * Get the full, detailed information for a single class by its ID.
+     * This is the primary endpoint for class details.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ClassDetailDTO> getClassDetailsById(@PathVariable Long id) {
+    public ResponseEntity<ClassDetailDTO> getClassDetails(@PathVariable Long id) {
+        System.out.println(">>>>>>>>> Request received for Class Details for ID: " + id);
         try {
             ClassDetailDTO classDetails = classService.getClassDetailsById(id);
             return ResponseEntity.ok(classDetails);
         } catch (RuntimeException e) {
-            // This will catch the "Class not found" exception from the service
+            System.err.println("Error fetching class details for ID " + id + ": " + e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
 
-    // --- The rest of your POST, PUT, DELETE methods can remain as they were ---
-    // They still work with the simple ClassEntity, which is fine for now.
+    // --- The rest of your POST, PUT, DELETE methods can stay as they are ---
 
     @PostMapping
     public ClassEntity createClass(@RequestBody ClassEntity classEntity) {
@@ -57,23 +65,12 @@ public class ClassController {
         }
     }
 
-    /**
-     * Delete a class by its ID.
-     * @param classId the class ID
-     * @return ResponseEntity with status
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClass(@PathVariable(value = "id") Long classId) {
-        classService.deleteClass(classId);
+    public ResponseEntity<Void> deleteClass(@PathVariable(value = "id") Long id) {
+        classService.deleteClass(id);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Add a student to a class.
-     * @param classId the class ID
-     * @param studentId the student ID
-     * @return ResponseEntity with updated ClassEntity or 404
-     */
     @PostMapping("/{classId}/students/{studentId}")
     public ResponseEntity<ClassEntity> addStudentToClass(@PathVariable Long classId, @PathVariable Long studentId) {
         try {
@@ -83,12 +80,6 @@ public class ClassController {
         }
     }
 
-    /**
-     * Remove a student from a class.
-     * @param classId the class ID
-     * @param studentId the student ID
-     * @return ResponseEntity with updated ClassEntity or 404
-     */
     @DeleteMapping("/{classId}/students/{studentId}")
     public ResponseEntity<ClassEntity> removeStudentFromClass(@PathVariable Long classId, @PathVariable Long studentId) {
         try {
@@ -98,12 +89,6 @@ public class ClassController {
         }
     }
 
-    /**
-     * Change the teacher of a class.
-     * @param classId the class ID
-     * @param teacherId the new teacher ID
-     * @return ResponseEntity with updated ClassEntity or 404
-     */
     @PutMapping("/{classId}/teacher/{teacherId}")
     public ResponseEntity<ClassEntity> changeTeacher(@PathVariable Long classId, @PathVariable Long teacherId) {
         try {

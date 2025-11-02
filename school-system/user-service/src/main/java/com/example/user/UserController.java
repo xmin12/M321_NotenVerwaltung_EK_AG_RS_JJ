@@ -16,10 +16,9 @@ public class UserController {
 @GetMapping
 public List<User> getAll(@RequestParam(name = "ids", required = false) List<Long> ids) {
     if (ids != null && !ids.isEmpty()) {
-        // If the "ids" parameter is present, find all users with those IDs.
+        // This returns full User objects (id, name, email, role, etc.)
         return repo.findAllById(ids);
     }
-    // Otherwise, return all users as before.
     return repo.findAll();
 }
 

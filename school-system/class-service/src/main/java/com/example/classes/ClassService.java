@@ -59,7 +59,6 @@ public class ClassService {
 
     // Helper method to fetch a list of users by their IDs.
     private List<UserDTO> fetchUsersByIds(List<Long> userIds) {
-        // Convert the list of Longs into a comma-separated string (e.g., "101,102,103")
         String ids = userIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
@@ -67,12 +66,12 @@ public class ClassService {
         return userServiceWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/users")
-                        .queryParam("ids", ids) // Calls GET http://user-service:8081/api/users?ids=101,102
+                        .queryParam("ids", ids)
                         .build())
                 .retrieve()
-                .bodyToFlux(UserDTO.class) // We expect a list (Flux) of users
+                .bodyToFlux(UserDTO.class)
                 .collectList()
-                .block(); // .block() waits for the list to be complete
+                .block();
     }
 
     // --- EXISTING METHODS (No changes needed below this line) ---

@@ -1,17 +1,22 @@
-version: "3.9"
+# Note: The 'version' attribute is obsolete and has been removed for modern Docker Compose.
 services:
-  # --- Datenbanken ---
+
+  # ===============================================================
+  # DATABASES
+  # Each database gets its own persistent volume and a healthcheck.
+  # ===============================================================
   user-db:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: users
-    ports: ["5433:5432"] 
+    ports: ["5433:5432"]
     volumes: [user-data:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
+      timeout: 5s
       retries: 5
 
   class-db:
@@ -25,6 +30,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
+      timeout: 5s
       retries: 5
 
   grade-db:
@@ -38,6 +44,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
+      timeout: 5s
       retries: 5
 
   stats-db:
@@ -51,9 +58,14 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
+      timeout: 5s
       retries: 5
 
-  # --- Backends ---
+  # ===============================================================
+  # BACKEND SERVICES
+  # Each service has its database connection configured via environment variables,
+  # depends on its database being healthy, and has its own healthcheck.
+  # ===============================================================
   user-service:
     build: ./user-service
     ports: ["8081:8081"]
@@ -62,8 +74,13 @@ services:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/users
-      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASource_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   class-service:
     build: ./class-service
@@ -71,10 +88,17 @@ services:
     depends_on:
       class-db:
         condition: service_healthy
+      user-service: # depends on the user-service to fetch data
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://class-db:5432/classes
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8082/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   grade-service:
     build: ./grade-service
@@ -86,6 +110,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://grade-db:5432/grades
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8083/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   stats-service:
     build: ./stats-service
@@ -97,17 +126,33 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8084/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # --- Frontend ---
+  # ===============================================================
+  # FRONTEND SERVICE
+  # The frontend waits for all backend APIs to be healthy before starting.
+  # ===============================================================
   frontend:
     build: ./frontend
     ports: ["3000:3000"]
     depends_on:
-      - user-service
-      - class-service
-      - grade-service
-      - stats-service
+      user-service:
+        condition: service_healthy
+      class-service:
+        condition: service_healthy
+      grade-service:
+        condition: service_healthy
+      stats-service:
+        condition: service_healthy
 
+# ===============================================================
+# VOLUMES
+# Defines the named volumes to persist database data.
+# ===============================================================
 volumes:
   user-data:
   class-data:

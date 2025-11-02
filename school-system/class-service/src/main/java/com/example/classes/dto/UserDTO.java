@@ -8,5 +8,5 @@ public record UserDTO(
     Long id,
     String name,
     String email,
-    String role // It can be useful to know the user's role
+    String role
 ) {}

@@ -1,3 +1,5 @@
+DELETE FROM users;
+
 -- Admin
 INSERT INTO users (name, email, password, role)
 VALUES ('Admin User', 'admin@school.com', 'admin123', 'ADMIN');

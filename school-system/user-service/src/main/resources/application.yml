@@ -3,16 +3,16 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://user-db:5432/users   # user-db = Docker Service Name
+    url: jdbc:postgresql://user-db:5432/users  
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none   # Hibernate erstellt keine Tabellen
+      ddl-auto: none   
     show-sql: true
 
   sql:
     init:
-      mode: always     # schema.sql und data.sql werden ausgeführt
+      mode: always   

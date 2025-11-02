@@ -3,7 +3,7 @@ package com.example.user;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // Avoid reserved word "user"
+@Table(name = "users")
 public class User {
 
     @Id
@@ -23,10 +23,8 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    // No-args constructor
     public User() {}
 
-    // All-args constructor
     public User(Long id, String name, String email, String password, Role role) {
         this.id = id;
         this.name = name;
@@ -35,7 +33,6 @@ public class User {
         this.role = role;
     }
 
-    // Getters / Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

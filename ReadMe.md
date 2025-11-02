@@ -1,7 +1,3 @@
-Natürlich! Hier ist die aktualisierte Version mit der Information, dass du auch Postman-Tests für den **Grade-Service** durchgeführt hast und alle erfolgreich waren, zusammen mit dem Bild als Referenz:
-
----
-
 # Notenverwaltungssystem
 
 ## Projektziele

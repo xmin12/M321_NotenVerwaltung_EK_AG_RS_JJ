@@ -25,10 +25,10 @@
 ---
 
 ## Features / Systemkomponenten
-- Benutzerverwaltung – [Verantwortliche Person]  
-- Klassenverwaltung – [Verantwortliche Person]  
-- Notenerfassung – [Verantwortliche Person]  
-- Statistik & Auswertung – [Verantwortliche Person]  
+- Benutzerverwaltung – Ruben 
+- Klassenverwaltung – Elmar 
+- Notenerfassung – Jasmin
+- Statistik & Auswertung – Aurora
 
 (Hinweis: Jede Person übernimmt ein Feature inkl. Frontend, Backend und DB-Anbindung.)  
 
@@ -56,13 +56,3 @@ Laut Vorgaben müssen folgende Punkte vorhanden sein:
   - Jede*r stellt die eigene Komponente vor  
   - Gesamtsystem wird lauffähig gezeigt  
 
----
-
-## ToDo-Checkliste
-- [ ] Anforderungen dokumentieren  
-- [ ] Schnittstellen definieren  
-- [ ] Features umsetzen  
-- [ ] Hochverfügbarkeit sicherstellen  
-- [ ] Gesamtsystem testen  
-- [ ] Dokumentation finalisieren  
-- [ ] Präsentation vorbereiten  

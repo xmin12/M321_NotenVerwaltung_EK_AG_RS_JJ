@@ -1,103 +1,134 @@
-
 import React, { useEffect, useState } from "react";
-import api from "../api/api";
-
-type ClassEntity = {
-  id: number;
-  name: string;
-  teacherId: number;
-  studentIds: number[];
-};
+import classService, { ClassEntity } from "../services/classService";
+import userService, { User } from "../services/userService";
 
 export default function Classes() {
   const [classes, setClasses] = useState<ClassEntity[]>([]);
-  const [form, setForm] = useState({ name: "", teacherId: "" });
   const [selectedClass, setSelectedClass] = useState<ClassEntity | null>(null);
-  const [studentId, setStudentId] = useState("");
+  const [form, setForm] = useState({ name: "", teacherId: 0 });
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<{ teacher?: User; students?: User[] } | null>(null);
+  const [userMap, setUserMap] = useState<Map<number, User>>(new Map());
+  const [allStudents, setAllStudents] = useState<User[]>([]); 
+
+  const fetchClasses = async () => {
+    setLoading(true);
+    try {
+      const data = await classService.getAll();
+      const allUserIds = new Set<number>();
+      data.forEach(c => {
+        allUserIds.add(c.teacherId);
+        c.studentIds.forEach(id => allUserIds.add(id));
+      });
+      const usersArray = await Promise.all(Array.from(allUserIds).map(id => userService.getById(id)));
+      const userMap = new Map<number, User>();
+      usersArray.forEach(u => userMap.set(u.id, u));
+      setUserMap(userMap);
+
+      const students = await userService.getByRole("STUDENT");
+      setAllStudents(students);
+
+      setClasses(data);
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    api.classes.get("/").then((r: { data: ClassEntity[] }) => setClasses(r.data));
+    fetchClasses();
   }, []);
 
-  const addClass = async () => {
-    const res = await api.classes.post("/", {
-      name: form.name,
-      teacherId: Number(form.teacherId),
-      studentIds: []
-    });
-    setClasses([...classes, res.data]);
-    setForm({ name: "", teacherId: "" });
+  const handleViewUsers = (c: ClassEntity) => {
+    const teacher = userMap.get(c.teacherId);
+    const students = c.studentIds.map(id => userMap.get(id)).filter(Boolean) as User[];
+    setSelectedUsers({ teacher, students });
+    setSelectedClass(c);
+    setSelectedStudentIds([]); 
   };
 
-  const updateClass = async () => {
-    if (!selectedClass) return;
-    const res = await api.classes.put(`/${selectedClass.id}`, {
-      name: selectedClass.name,
-      teacherId: selectedClass.teacherId,
-      studentIds: selectedClass.studentIds
-    });
-    setClasses(classes.map((c: ClassEntity) => c.id === selectedClass.id ? res.data : c));
-    setSelectedClass(null);
-  };
+  const handleAddStudents = async () => {
+    if (!selectedClass || selectedStudentIds.length === 0) return;
 
-  const deleteClass = async (id: number) => {
-    await api.classes.delete(`/${id}`);
-    setClasses(classes.filter((c: ClassEntity) => c.id !== id));
-    setSelectedClass(null);
-  };
-
-  const addStudent = async () => {
-    if (!selectedClass || !studentId) return;
-    const res = await api.classes.post(`/${selectedClass.id}/students/${studentId}`);
-    setClasses(classes.map((c: ClassEntity) => c.id === selectedClass.id ? res.data : c));
-    setSelectedClass(res.data);
-    setStudentId("");
-  };
-
-  const removeStudent = async (sid: number) => {
-    if (!selectedClass) return;
-    const res = await api.classes.delete(`/${selectedClass.id}/students/${sid}`);
-    setClasses(classes.map((c: ClassEntity) => c.id === selectedClass.id ? res.data : c));
-    setSelectedClass(res.data);
+    let updatedClass = selectedClass;
+    for (const sid of selectedStudentIds) {
+      updatedClass = await classService.addStudent(selectedClass.id, sid);
+    }
+    setClasses(classes.map(c => (c.id === updatedClass.id ? updatedClass : c)));
+    setSelectedClass(updatedClass);
+    setSelectedStudentIds([]);
   };
 
   return (
-    <div style={{padding:"1rem"}}>
-      <h2>Klassenverwaltung</h2>
-      <div style={{marginBottom:"1rem"}}>
-        <input value={form.name} placeholder="Klassenname" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setForm({...form,name:e.target.value})}/>
-        <input value={form.teacherId} placeholder="Lehrer-ID" type="number" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setForm({...form,teacherId:e.target.value})}/>
-        <button onClick={addClass}>Klasse hinzufügen</button>
-      </div>
-      <ul>
-        {classes.map((c: ClassEntity)=>(
-          <li key={c.id} style={{marginBottom:"1rem"}}>
-            <b>{c.name}</b> (Lehrer: {c.teacherId})
-            <button style={{marginLeft:"1rem"}} onClick={()=>setSelectedClass(c)}>Bearbeiten</button>
-            <button style={{marginLeft:"0.5rem"}} onClick={()=>deleteClass(c.id)}>Löschen</button>
-            <div>Schüler: {c.studentIds.join(", ")}</div>
-          </li>
-        ))}
-      </ul>
-      {selectedClass && (
-        <div style={{border:"1px solid #ccc",padding:"1rem",marginTop:"1rem"}}>
-          <h3>Klasse bearbeiten: {selectedClass.name}</h3>
-          <input value={selectedClass.name} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setSelectedClass({...selectedClass,name:e.target.value})} placeholder="Name"/>
-          <input value={selectedClass.teacherId} type="number" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setSelectedClass({...selectedClass,teacherId:Number(e.target.value)})} placeholder="Lehrer-ID"/>
-          <button onClick={updateClass}>Speichern</button>
-          <button onClick={()=>setSelectedClass(null)} style={{marginLeft:"0.5rem"}}>Abbrechen</button>
-          <div style={{marginTop:"1rem"}}>
-            <h4>Schüler</h4>
-            <input value={studentId} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStudentId(e.target.value)} placeholder="Schüler-ID" type="number"/>
-            <button onClick={addStudent}>Schüler hinzufügen</button>
-            <ul>
-              {selectedClass.studentIds.map((sid: number)=>(
-                <li key={sid}>
-                  {sid} <button onClick={()=>removeStudent(sid)}>Entfernen</button>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Class Management</h1>
+
+      {loading ? (
+        <p className="text-center text-gray-500">Loading classes...</p>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {classes.map(c => (
+            <div key={c.id} className="bg-white p-5 rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">{c.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    Teacher: {userMap.get(c.teacherId)?.name || "Unknown"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Students: {c.studentIds.map(id => userMap.get(id)?.name || id).join(", ")}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => handleViewUsers(c)} className="text-green-600 hover:underline text-sm">View Users</button>
+                </div>
+              </div>
+
+              {selectedUsers && selectedClass?.id === c.id && (
+                <div className="border-t pt-3 mt-3">
+                  <h4 className="font-semibold mb-2">Teacher</h4>
+                  <p>{selectedUsers.teacher?.name} (ID: {selectedUsers.teacher?.id})</p>
+
+                  <h4 className="font-semibold mt-3 mb-2">Students</h4>
+                  <ul className="list-disc pl-5 mb-2">
+                    {selectedUsers.students?.map(s => (
+                      <li key={s.id}>{s.name} (ID: {s.id})</li>
+                    ))}
+                  </ul>
+
+                  <h4 className="font-semibold mt-3 mb-2">Add Students</h4>
+                  <select
+                    multiple
+                    value={selectedStudentIds.map(String)}
+                    onChange={e =>
+                      setSelectedStudentIds(Array.from(e.target.selectedOptions, option => Number(option.value)))
+                    }
+                    className="border p-2 rounded-lg w-full mb-2 focus:ring-2 focus:ring-blue-400"
+                  >
+                    {allStudents
+                      .filter(s => !selectedClass.studentIds.includes(s.id))
+                      .map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} (ID: {s.id})
+                        </option>
+                      ))}
+                  </select>
+                  <button onClick={handleAddStudents} className="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700 transition">
+                    Add Selected Students
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedUsers(null)}
+                    className="mt-2 bg-gray-300 text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-400 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

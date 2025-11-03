@@ -68,10 +68,7 @@ Laut Vorgaben müssen folgende Punkte vorhanden sein:
 
 ## Testprotokoll – Microservices Projekt
 
-**Projekt:** Schulmanagement-System
-**Version:** 1.0
-**Datum:** [Datum einfügen]
-**Tester:** [Name einfügen]
+**Projekt:** Notenverwaltung
 
 **Umfang:** Dieses Protokoll dokumentiert die Unit-Tests der Microservices **user-service**, **grade-service** und **class-service**. Ziel ist es, die Abdeckung und Funktionalität der Entitäten, Repositories und Controller zu überprüfen. Besonderes Augenmerk liegt auf Fehlerbehandlung und erwarteten HTTP-Statuscodes.
 

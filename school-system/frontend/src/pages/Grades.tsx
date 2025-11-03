@@ -53,11 +53,7 @@ export default function GradePage() {
   };
 
   const handleDelete = async (id: number) => {
-<<<<<<< HEAD
-    if (!window.confirm("Delete this grade?")) return;
-=======
     if (!globalThis.confirm("Delete this grade?")) return;
->>>>>>> 6ca0f4e170a7ad1c7b4c51b8150dd1dcc1a307b4
     try {
       await GradeService.delete(id);
       setGrades(grades.filter(g => g.id !== id));

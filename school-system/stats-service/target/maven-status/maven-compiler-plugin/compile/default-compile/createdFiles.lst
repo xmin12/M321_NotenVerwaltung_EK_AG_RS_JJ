@@ -1,4 +1,5 @@
+com\example\stats\StatsApplication.class
 com\example\stats\StatsController.class
 com\example\stats\Stats.class
-com\example\stats\StatsApplication.class
 com\example\stats\StatsRepository.class
+com\example\stats\StatsService.class

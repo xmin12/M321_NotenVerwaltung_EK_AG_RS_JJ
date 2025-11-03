@@ -1,11 +1,20 @@
+server:
+  port: 8084
+
 spring:
   datasource:
     url: jdbc:postgresql://stats-db:5432/stats
     username: postgres
     password: postgres
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
-server:
-  port: 8084
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql

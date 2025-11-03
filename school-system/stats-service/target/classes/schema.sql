@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS stats (
+    id SERIAL PRIMARY KEY,
+    student_id BIGINT NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    highest_grade DOUBLE PRECISION NOT NULL,
+    lowest_grade DOUBLE PRECISION NOT NULL,
+    average_grade DOUBLE PRECISION NOT NULL
+);

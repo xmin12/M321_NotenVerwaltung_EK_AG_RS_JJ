@@ -1,6 +1,5 @@
 package com.example.stats;
 
-
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -8,9 +7,34 @@ import java.util.List;
 @RequestMapping("/api/stats")
 @CrossOrigin(origins = "*")
 public class StatsController {
-  private final StatsRepository repo;
-  public StatsController(StatsRepository repo){ this.repo = repo; }
 
-  @GetMapping public List<Stats> getAll(){ return repo.findAll(); }
-  @PostMapping public Stats addStats(@RequestBody Stats s){ return repo.save(s); }
+    private final StatsRepository repo;
+    private final StatsService statsService;
+
+    public StatsController(StatsRepository repo, StatsService statsService) {
+        this.repo = repo;
+        this.statsService = statsService;
+    }
+
+    @GetMapping
+    public List<Stats> getAllStats() {
+        return repo.findAll();
+    }
+
+    @GetMapping("/student/{studentId}")
+    public List<Stats> getStatsByStudent(@PathVariable Long studentId) {
+        return repo.findByStudentId(studentId);
+    }
+
+    @GetMapping("/subject/{subject}")
+    public List<Stats> getStatsBySubject(@PathVariable String subject) {
+        return repo.findBySubject(subject);
+    }
+
+    @PostMapping("/refresh")
+    public List<Stats> refreshStats() {
+        repo.deleteAll();
+        List<Stats> newStats = statsService.generateStats();
+        return repo.saveAll(newStats);
+    }
 }
